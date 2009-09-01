@@ -32,63 +32,63 @@ class RRSlug
 {
     
     /**
-     * Filters to apply on the supplied string.
-     *
-     * @var array
+     * The default filter chain key.
      */
-    protected $_filters = array();
+    const DEFAULT_FILTERCHAIN = 'default';
     
     /**
-     * Are filters sorted by priority ?
+     * An array of the available filters.
      *
-     * @var boolean
+     * @var RRSlug_FilterInterface[]
      */
-    protected $_filtersAreSorted = false;
+    protected $_availableFilters   = array();
     
-    public function __construct( $loadDefaultFilters = true, $registerAutoload = true )
+    /**
+     * An array of the available filter chains.
+     *
+     * @var RRSlug_FilterChain[]
+     */
+    protected $_availableFilterChains = array();
+    
+    public function __construct( $loadDefaultFilters = true )
     {
-        if( $registerAutoload ) {
-            
-            spl_autoload_register( array( $this, '_loadClass' ) );
-        }
+        spl_autoload_register( array( $this, '_loadClass' ) );
         
         if( $loadDefaultFilters ) {
             
             $this->_loadDefaultFilters();
         }
+        
+        $this->_buildDefaultFilterChain();
     }
     
     /**
-     * Turns a text into a safe url.
+     * Turns a text into a slug.
      *
-     * @param  string $text The text to convert.
-     * @return string The safe url.
+     * @param  string $text The text to "sluggify".
+     * @return string The slug.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
-     **/
-    public function filter( $text )
+     */
+    public function filter( $text, $filterChain = self::DEFAULT_FILTERCHAIN )
     {
-        if( !$this->_filtersAreSorted ) {
+        if( !( $filterChain instanceof RRSlug_FilterChain ) ) {
             
-            $this->_sortFilters();
-        }
-        
-        foreach( $this->_filters as $filter ) {
-            
-            print $filter->getKey();
-            
-            if( !$filter->isAvailable() ) {
+            if( is_string( $filterChain ) ) {
                 
-                print ' - UNAVAILABLE' . "\n";
+                if( !array_key_exists( $filterChain, $this->_availableFilterChains ) ) {
+                    
+                    $filterChain = self::DEFAULT_FILTERCHAIN;
+                }
                 
-                continue;
+                $filterChain = $this->_availableFilterChains[ $filterChain ];
+            
+            } else {
+                
+                $filterChain = $this->_availableFilterChains[ self::DEFAULT_FILTERCHAIN ];
             }
-            
-            $text = $filter->filter( $text );
-            
-            print ' => ' . $text . "\n";
         }
         
-        return $text;
+        return $filterChain->filter( $text );
     }
     
     /**
@@ -106,8 +106,28 @@ class RRSlug
             $filter->setOptions( $options );
         }
         
-        $this->_filters[ $filter->getKey() ] = $filter;
-        $this->_filtersAreSorted             = false;
+        $this->_availableFilters[ $filter->getKey() ] = $filter;
+        
+        return $this;
+    }
+    
+    /**
+     * Remove a filter by its key-
+     *
+     * @param string $key The filter's key.
+     * @return RRSlug A reference to this instance.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function removeFilter( $key )
+    {
+        if( !array_key_exists( $key, $this->_availableFilters ) ) {
+            
+            throw new RRSlug_Exception_NoSuchFilter(
+                'No filter with key "' . $key . '" has been found.'
+            );
+        }
+        
+        unset( $this->_availableFilters[ $key ] );
         
         return $this;
     }
@@ -121,14 +141,25 @@ class RRSlug
      */
     public function getFilter( $key )
     {
-        if( !array_key_exists( $key, $this->_filters ) ) {
+        if( !array_key_exists( $key, $this->_availableFilters ) ) {
             
             throw new RRSlug_Exception_NoSuchFilter(
                 'No filter with key "' . $key . '" has been found.'
             );
         }
         
-        return $this->_filters[ $key ];
+        return $this->_availableFilters[ $key ];
+    }
+    
+    /**
+     * Return the available filters.
+     *
+     * @return RRSlug_FilterInterface[] An array of the available filters.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function getAvailableFilters()
+    {
+        return $this->_availableFilters;
     }
     
     /**
@@ -144,6 +175,56 @@ class RRSlug
         $this->getFilter( $key )->setOptions( $options );
         
         return $this;
+    }
+    
+    /**
+     * Get a chain object by its key.
+     *
+     * @param string $key The chain's key.
+     * @return RRSlug_FilterChain The chain.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function getChain( $key )
+    {
+        if( !array_key_exists( $key, $this->_availableFilterChains ) ) {
+            
+            throw new RRSlug_Exception_NoSuchFilterChain(
+                'No chain with key "' . $key . '" has been found.'
+            );
+        }
+        
+        return $this->_availableFilterChains[ $key ];
+    }
+    
+    /**
+     * Return the available chains.
+     *
+     * @return RRSlug_FilterChain[] An array of the available chains.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function getAvailableFilterChains()
+    {
+        return $this->_availableFilterChains;
+    }
+    
+    /**
+     * Add a chain to the list of available chain.
+     *
+     * @param string $key The chain key.
+     * @param mixed $chain NULL to create a new chain, or an existing RRSlug_FilterChain object.
+     * @return RRSlug_FilterChain The chain object.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function addChain( $key, $chain = NULL )
+    {
+        if( !( $chain instanceof RRSlug_FilterChain ) ) {
+            
+            $chain = new RRSlug_FilterChain( $key );
+        }
+        
+        $this->_availableFilterChains[ $chain->getKey() ] = $chain;
+        
+        return $chain;
     }
     
     /**
@@ -178,10 +259,8 @@ class RRSlug
                 continue;
             }
             
-            $this->_filters[ $filter->getKey() ] = $filter;
+            $this->_availableFilters[ $filter->getKey() ] = $filter;
         }
-        
-        $this->_filtersAreSorted = false;
     }
     
     /**
@@ -204,15 +283,15 @@ class RRSlug
      * @return void
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
-    protected function _sortFilters()
+    protected function _sortFilters( &$filters )
     {
-        uasort( $this->_filters, array( $this, '_compareFiltersPriority' ) );
+        uasort( $filters, array( $this, '_compareFiltersPriority' ) );
     }
     
     /**
      * This methid is called by uasort to sort the filters by descending priority.
      *
-     * @param string $filterA The filter A 
+     * @param string $filterA The filter A
      * @param string $filterB The filter B
      * @return integer -1 if A > B, 1 else.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
@@ -220,6 +299,21 @@ class RRSlug
     protected function _compareFiltersPriority( $filterA, $filterB )
     {
         return ( $filterA->getPriority() > $filterB->getPriority() ) ? -1 : 1;
+    }
+    
+    /**
+     * Build the default filter chain.
+     *
+     * @return void
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    protected function _buildDefaultFilterChain()
+    {
+        $filters = $this->_availableFilters;
+        
+        $this->_sortFilters( $filters );
+        
+        $this->addChain( self::DEFAULT_FILTERCHAIN )->setFilters( $filters );
     }
     
     /**
