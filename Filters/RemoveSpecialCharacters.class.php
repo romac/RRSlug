@@ -49,7 +49,14 @@ class RRSlug_Filters_RemoveSpecialCharacters extends RRSlug_FilterAbstract
      * @var array
      */
     protected $_options  = array(
-        'and' => 'and'
+        'notToRemove'  => 'a-z0-9&_-\s/\\\\',
+        'replacements' => array(
+            '&'  => ' and ',
+            ' '  => '-',
+            '/'  => '-',
+            '\\' => '-',
+            '_'  => '-'
+        )
     );
     
     /**
@@ -64,10 +71,15 @@ class RRSlug_Filters_RemoveSpecialCharacters extends RRSlug_FilterAbstract
      */
     public function filter( $text )
     {
-        $text = preg_replace( '/[^&a-z0-9_-\s\']/i','', $text );
+        $text = preg_replace(
+            '#[^' . $this->_options[ 'notToRemove' ] . ']#i',
+            '', 
+            $text
+        );
+        
         $text = str_replace(
-            array( '&',    ' ', '\'' ),
-            array( ' ' . $this->_options[ 'and' ] . ' ', '-', '' ),
+            array_keys( $this->_options[ 'replacements' ] ),
+            array_values( $this->_options[ 'replacements' ] ),
             $text
         );
         
