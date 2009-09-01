@@ -39,9 +39,16 @@ class RRSlug_FilterChain
     /**
      * Filters
      *
-     * @var RRSlug_FilterInteface[]
+     * @var RRSlug_FilterInterface[]
      */
     protected $_filters = array();
+    
+    /**
+     * RRSlug instance.
+     *
+     * @var RRSlug
+     */
+    protected $_slug = NULL;
     
     /**
      * Create a new RRSlug_FilterChain object.
@@ -49,9 +56,10 @@ class RRSlug_FilterChain
      * @param string $key The chain's key.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
-    public function __construct( $key )
+    public function __construct( $key, RRSlug $slug )
     {
-        $this->_key = $key;
+        $this->_key  = $key;
+        $this->_slug = $slug;
     }
     
     /**
@@ -66,14 +74,41 @@ class RRSlug_FilterChain
     }
     
     /**
-     * Add a filter at the end of the chain.
+     * Get the base RRSlug instance.
      *
-     * @param RRSlug_FilterInteface $filter The filter
+     * @return RRSlug
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function getSlug()
+    {
+        return $this->_slug;
+    }
+     
+    /**
+     * Set the base RRSlug instance.
+     *
+     * @param string $slug The base RRSlug instance.
      * @return RRSlug_FilterChain A reference to this instance.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
-    public function push( RRSlug_FilterInteface $filter )
+    public function setSlug( RRSlug $slug )
     {
+        $this->_slug = $slug;
+         
+        return $this;
+    }
+    
+    /**
+     * Add a filter at the end of the chain.
+     *
+     * @param mixed $filter Either a filter key or a instance of RRSlug_FilterInterface.
+     * @return RRSlug_FilterChain A reference to this instance.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    public function push( $filter )
+    {
+        $filter = $this->_slug->getFilterFromMixedValue( $filter );
+        
         if( array_key_exists( $filter->getKey(), $this->_filters ) ) {
             
             throw new RRSlug_Exception_DuplicateFilter(
@@ -90,12 +125,14 @@ class RRSlug_FilterChain
     /**
      * Add a filter at the beginning of the chain
      *
-     * @param RRSlug_FilterInteface $filter The filter.
+     * @param mixed $filter Either a filter key or a instance of RRSlug_FilterInterface.
      * @return RRSlug_FilterChain A reference to this instance.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
-    public function unshift( RRSlug_FilterInteface $filter )
+    public function unshift( $filter )
     {
+        $filter = $this->_slug->getFilterFromMixedValue( $filter );
+        
         if( array_key_exists( $filter->getKey(), $this->_filters ) ) {
             
             throw new RRSlug_Exception_DuplicateFilter(
@@ -126,7 +163,7 @@ class RRSlug_FilterChain
     /**
      * Get the filters.
      *
-     * @return RRSlug_FilterInteface[]
+     * @return RRSlug_FilterInterface[]
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
     public function getFilters()

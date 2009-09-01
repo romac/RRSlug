@@ -219,8 +219,10 @@ class RRSlug
     {
         if( !( $chain instanceof RRSlug_FilterChain ) ) {
             
-            $chain = new RRSlug_FilterChain( $key );
+            $chain = new RRSlug_FilterChain( $key, $this );
         }
+        
+        $chain->setSlug( $this );
         
         $this->_availableFilterChains[ $chain->getKey() ] = $chain;
         
@@ -358,6 +360,30 @@ class RRSlug
         
         // The class has successfully been loaded.
         return true;
+    }
+    
+    public function getFilterFromMixedValue( $filter )
+    {
+        if( !( $filter instanceof RRSlug_FilterInterface ) ) {
+            
+            if( is_string( $filter ) ) {
+                
+                if( !array_key_exists( $filter, $this->_availableFilters ) ) {
+                    
+                    throw new RRSlug_Exception_NoSuchFilter(
+                        'Filter "' . $filter . '" not found.'
+                    );
+                }
+                
+                $filter = $this->_availableFilters[ $filter ];
+            
+            } else {
+                
+                $filter = $this->_availableFilters[ $filter ];
+            }
+        }
+        
+        return $filter;
     }
     
 }
