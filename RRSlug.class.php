@@ -16,11 +16,6 @@
  * @see        RRSlug
  */
 
-require_once( 'FilterInterface.class.php' );
-require_once( 'FilterAbstract.class.php' );
-require_once( 'Exception.class.php' );
-require_once( 'Exception/NoSuchFilter.class.php' );
-
 /**
  * Class RRSlug.
  * 
@@ -50,8 +45,13 @@ class RRSlug
      */
     protected $_filtersAreSorted = false;
     
-    public function __construct( $loadDefaultFilters = true )
+    public function __construct( $loadDefaultFilters = true, $registerAutoload = true )
     {
+        if( $registerAutoload ) {
+            
+            spl_autoload_register( array( $this, '_loadClass' ) );
+        }
+        
         if( $loadDefaultFilters ) {
             
             $this->_loadDefaultFilters();
@@ -209,9 +209,61 @@ class RRSlug
         uasort( $this->_filters, array( $this, '_compareFiltersPriority' ) );
     }
     
+    /**
+     * This methid is called by uasort to sort the filters by descending priority.
+     *
+     * @param string $filterA The filter A 
+     * @param string $filterB The filter B
+     * @return integer -1 if A > B, 1 else.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
     protected function _compareFiltersPriority( $filterA, $filterB )
     {
         return ( $filterA->getPriority() > $filterB->getPriority() ) ? -1 : 1;
+    }
+    
+    /**
+     * Load the file defining the given class.
+     *
+     * @param  string The class name.
+     * @return boolean Whether the class has been successfully been loaded or not.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    protected function _loadClass( $className )
+    {
+        // Define statically the replacements to do on the class name.
+        static $replacements = array(
+            __CLASS__ => '',
+            '_'       => DIRECTORY_SEPARATOR
+        );
+        
+        // Build the file path and name.
+        $filePathName  = __DIR__;
+        $filePathName .= str_replace(
+            array_keys( $replacements ),
+            array_values( $replacements ),
+            $className
+        );
+        
+        $filePathName .= '.class.php';
+        
+        // Check if the file exists.
+        if( !file_exists( $filePathName ) ) {
+            
+            return false;
+        }
+        
+        // Include it.
+        require_once( $filePathName );
+        
+        // Check if the given class or interface is now defined.
+        if( !class_exists( $filePathName ) || !interface_exists( $filePathName ) ) {
+            
+            return false;
+        }
+        
+        // The class has successfully been loaded.
+        return true;
     }
     
 }
