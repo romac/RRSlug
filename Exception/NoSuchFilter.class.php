@@ -26,7 +26,7 @@
 * @author     Romain Ruetschi <romain.ruetschi@gmail.com>
 * @version    0.1
 */
-class RRSlug_Exception_NoSuchFilter extends Exception
+class RRSlug_Exception_NoSuchFilter extends RRSlug_Exception
 {
 
     
