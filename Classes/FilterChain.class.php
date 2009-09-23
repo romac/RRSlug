@@ -34,7 +34,7 @@ class RRSlug_FilterChain
      *
      * @var string
      */
-    protected $_key = '';
+    protected $_key     = '';
     
     /**
      * Filters
@@ -48,7 +48,7 @@ class RRSlug_FilterChain
      *
      * @var RRSlug
      */
-    protected $_slug = NULL;
+    protected $_slug    = NULL;
     
     /**
      * Create a new RRSlug_FilterChain object.
@@ -58,7 +58,7 @@ class RRSlug_FilterChain
      */
     public function __construct( $key, RRSlug $slug )
     {
-        $this->_key  = $key;
+        $this->_key  = ( string )$key;
         $this->_slug = $slug;
     }
     
@@ -107,17 +107,8 @@ class RRSlug_FilterChain
      */
     public function push( $filter )
     {
-        $filter = $this->_slug->getFilterFromMixedValue( $filter );
-        
-        if( array_key_exists( $filter->getKey(), $this->_filters ) ) {
-            
-            throw new RRSlug_Exception_DuplicateFilter(
-                'Filter "' . $filter->getKey() . '" is already presents in ' .
-                'the filters list.'
-            );
-        }
-        
-        $this->_filters[ $filter->getKey() ] = $filter;
+        $filter           = $this->_slug->getFilterFromMixedValue( $filter );
+        $this->_filters[] = $filter;
         
         return $this;
     }
@@ -131,17 +122,8 @@ class RRSlug_FilterChain
      */
     public function unshift( $filter )
     {
-        $filter = $this->_slug->getFilterFromMixedValue( $filter );
-        
-        if( array_key_exists( $filter->getKey(), $this->_filters ) ) {
-            
-            throw new RRSlug_Exception_DuplicateFilter(
-                'Filter "' . $filter->getKey() . '" is already presents in ' .
-                'the filters list.'
-            );
-        }
-        
-        $this->_filters = array( $filter->getKey() => $filter ) + $this->_filters;
+        $filter         = $this->_slug->getFilterFromMixedValue( $filter );
+        $this->_filters = array( $filter ) + $this->_filters;
         
         return $this;
     }
@@ -155,6 +137,14 @@ class RRSlug_FilterChain
      */
     public function setFilters( array $filters )
     {
+        foreach( $filters as $key => $filter ) {
+            
+            if( !( $filter instanceof RRSlug_FilterInterface ) ) {
+                
+                unset( $filters[ $key ] );
+            }
+        }
+        
         $this->_filters = $filters;
         
         return $this;

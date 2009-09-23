@@ -9,7 +9,7 @@
 /**
  * Source file containing class RRSlug.
  * 
- * @package    default
+ * @package    RRSlug
  * @license    http://romac.github.com/files/BSD.txt New BSD License
  * @author     Romain Ruetschi <romain.ruetschi@gmail.com>
  * @version    0.1
@@ -34,25 +34,32 @@ class RRSlug
     /**
      * The default filter chain key.
      */
-    const DEFAULT_FILTERCHAIN = 'default';
+    const DEFAULT_FILTERCHAIN             = 'default';
+    
+    /**
+     * Is autoload callback registered ?
+     *
+     * @var boolean
+     */
+    protected static $_autoloadRegistered = false;
     
     /**
      * An array of the available filters.
      *
      * @var RRSlug_FilterInterface[]
      */
-    protected $_availableFilters   = array();
+    protected $_availableFilters          = array();
     
     /**
      * An array of the available filter chains.
      *
      * @var RRSlug_FilterChain[]
      */
-    protected $_availableFilterChains = array();
+    protected $_availableFilterChains     = array();
     
     public function __construct( $loadDefaultFilters = true )
     {
-        spl_autoload_register( array( $this, '_loadClass' ) );
+        self::autoloadRegister();
         
         if( $loadDefaultFilters ) {
             
@@ -60,6 +67,58 @@ class RRSlug
         }
         
         $this->_buildDefaultFilterChain();
+    }
+    
+    public static function autoloadRegister()
+    {
+        if( !self::$_autoloadRegistered ) {
+            
+            spl_autoload_register( array( __CLASS__, '_loadClass' ) );
+        }
+    }
+    
+    /**
+     * Load the file defining the given class.
+     *
+     * @param  string The class name.
+     * @return boolean Whether the class has been successfully been loaded or not.
+     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
+     */
+    protected static function _loadClass( $className )
+    {
+        // Define statically the replacements to do on the class name.
+        static $replacements = array(
+            __CLASS__ => '',
+            '_'       => DIRECTORY_SEPARATOR
+        );
+        
+        // Build the file path and name.
+        $filePathName  = __DIR__;
+        $filePathName .= str_replace(
+            array_keys( $replacements ),
+            array_values( $replacements ),
+            $className
+        );
+        
+        $filePathName .= '.class.php';
+        
+        // Check if the file exists.
+        if( !file_exists( $filePathName ) ) {
+            
+            return false;
+        }
+        
+        // Include it.
+        require_once( $filePathName );
+        
+        // Check if the given class or interface is now defined.
+        if( !class_exists( $filePathName ) || !interface_exists( $filePathName ) ) {
+            
+            return false;
+        }
+        
+        // The class has successfully been loaded.
+        return true;
     }
     
     /**
@@ -120,14 +179,10 @@ class RRSlug
      */
     public function removeFilter( $key )
     {
-        if( !array_key_exists( $key, $this->_availableFilters ) ) {
+        if( array_key_exists( $key, $this->_availableFilters ) ) {
             
-            throw new RRSlug_Exception_NoSuchFilter(
-                'No filter with key "' . $key . '" has been found.'
-            );
+            unset( $this->_availableFilters[ $key ] );
         }
-        
-        unset( $this->_availableFilters[ $key ] );
         
         return $this;
     }
@@ -141,14 +196,14 @@ class RRSlug
      */
     public function getFilter( $key )
     {
-        if( !array_key_exists( $key, $this->_availableFilters ) ) {
+        try {
             
-            throw new RRSlug_Exception_NoSuchFilter(
-                'No filter with key "' . $key . '" has been found.'
-            );
-        }
+            return $this->getFilterFromMixedValue( $key );
         
-        return $this->_availableFilters[ $key ];
+        } catch( RRSlug_Exception $e ) {
+            
+            
+        }
     }
     
     /**
@@ -318,50 +373,6 @@ class RRSlug
         $this->addChain( self::DEFAULT_FILTERCHAIN )->setFilters( $filters );
     }
     
-    /**
-     * Load the file defining the given class.
-     *
-     * @param  string The class name.
-     * @return boolean Whether the class has been successfully been loaded or not.
-     * @author Romain Ruetschi <romain.ruetschi@gmail.com>
-     */
-    protected function _loadClass( $className )
-    {
-        // Define statically the replacements to do on the class name.
-        static $replacements = array(
-            __CLASS__ => '',
-            '_'       => DIRECTORY_SEPARATOR
-        );
-        
-        // Build the file path and name.
-        $filePathName  = __DIR__;
-        $filePathName .= str_replace(
-            array_keys( $replacements ),
-            array_values( $replacements ),
-            $className
-        );
-        
-        $filePathName .= '.class.php';
-        
-        // Check if the file exists.
-        if( !file_exists( $filePathName ) ) {
-            
-            return false;
-        }
-        
-        // Include it.
-        require_once( $filePathName );
-        
-        // Check if the given class or interface is now defined.
-        if( !class_exists( $filePathName ) || !interface_exists( $filePathName ) ) {
-            
-            return false;
-        }
-        
-        // The class has successfully been loaded.
-        return true;
-    }
-    
     public function getFilterFromMixedValue( $filter )
     {
         if( !( $filter instanceof RRSlug_FilterInterface ) ) {
@@ -371,7 +382,7 @@ class RRSlug
                 if( !array_key_exists( $filter, $this->_availableFilters ) ) {
                     
                     throw new RRSlug_Exception_NoSuchFilter(
-                        'Filter "' . $filter . '" not found.'
+                        'Filter with key "' . $filter . '" not found.'
                     );
                 }
                 
@@ -379,7 +390,10 @@ class RRSlug
             
             } else {
                 
-                $filter = $this->_availableFilters[ $filter ];
+                throw new RRSlug_Exception_NoSuchFilter(
+                    'The first argument must be either a string or an instance' .
+                    ' of RRSlug_FilterInterface.'
+                );
             }
         }
         

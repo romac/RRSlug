@@ -7,26 +7,26 @@
 */
 
 /**
-* Source file containing class RRSlug_Filters_TrimBlank.
+* Source file containing class RRSlug_Filters_LowerCase.
 * 
 * @package    RRSlug
 * @license    http://romac.github.com/files/BSD.txt New BSD License
 * @author     Romain Ruetschi <romain.ruetschi@gmail.com>
 * @version    0.1
-* @see        RRSlug_Filters_TrimBlank
+* @see        RRSlug_Filters_LowerCase
 */
 
 /**
-* Class RRSlug_Filters_TrimBlank.
+* Class RRSlug_Filters_LowerCase.
 * 
-* Description for class RRSlug_Filters_TrimBlank.
+* Description for class RRSlug_Filters_LowerCase.
 *
 * @package    RRSlug
 * @license    http://romac.github.com/files/BSD.txt New BSD License
 * @author     Romain Ruetschi <romain.ruetschi@gmail.com>
 * @version    0.1
 */
-class RRSlug_Filters_TrimBlank extends RRSlug_FilterAbstract
+class RRSlug_Filters_LowerCase extends RRSlug_FilterAbstract
 {
     
     /**
@@ -34,14 +34,14 @@ class RRSlug_Filters_TrimBlank extends RRSlug_FilterAbstract
      *
      * @var string
      */
-    protected $_key      = 'blank';
+    protected $_key      = 'lowerCase';
     
     /**
      * Filter priority.
      *
      * @var integer
      */
-    protected $_priority = 10;
+    protected $_priority = 80;
     
     /**
      * Filter options.
@@ -49,22 +49,26 @@ class RRSlug_Filters_TrimBlank extends RRSlug_FilterAbstract
      * @var array
      */
     protected $_options  = array(
-        'blank' => ''
+        'encoding' => 'UTF-8'
     );
     
     /**
-     * Trim blank character around the text.
-     * If the resulting text is empty, return @blank@ option.
-     *
+     * Make a string lowercase using mbstring if found.
+     * 
      * @param  string $text The text to filter.
      * @return string The filtered text.
      * @author Romain Ruetschi <romain.ruetschi@gmail.com>
      */
     public function filter( $text )
     {
-        $text = trim( $text, ' ' );
+        if( function_exists( 'mb_strtolower' ) ) {
+            
+            return ( $this->_options[ 'encoding' ] )
+                   ? mb_strtolower( $text, $this->_options[ 'encoding' ] )
+                   : mb_strtolower( $text );
+        }
         
-        return ( !$text ) ? $this->_options[ 'blank' ] : $text;
+        return strtolower( $text );
     }
     
 }

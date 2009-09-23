@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="RRSlug" default="build">
+    <taskdef name="phpdocext" classname="phing.tasks.ext.phpdoc.PhpDocumentorExternalTask" />
+    <target name="clean">
+        <delete dir="build" />
+    </target>
+    <target name="prepare">
+        <mkdir dir="build/api" />
+        <mkdir dir="build/logs" />
+        <mkdir dir="build/report" />
+    </target>
+    <target name="lint">
+        <phplint>
+          <fileset dir="Classes">
+            <include name="**/*.php"/>
+          </fileset>
+        </phplint>
+    </target>
+    <target name="phpunit">
+        <phpunit printsummary="true" haltonfailure="true" haltonerror="true">
+            <formatter todir="build/logs" type="xml" outfile="testsuites.xml" />
+            <batchtest>
+                <fileset dir="tests">
+                    <include name="**/*Test*.php" />
+                    <exclude name="BaseTestCase.php" />
+                </fileset>
+            </batchtest>
+        </phpunit>
+        <phpunitreport infile="build/logs/testsuites.xml" styledir="/opt/local/lib/php/data/phing/etc" format="frames" todir="build/report" />
+    </target>
+    <target name="phpdoc">
+        <phpdocext title="RRSlug — API Documentation"
+                destdir="build/api"
+                sourcecode="no"
+                output="HTML:frames/Extjs:default"
+                sourcepath="Classes">
+        </phpdocext>
+    </target>
+    <target name="build" depends="clean,prepare,lint,phpunit,phpdoc">
+        <echo msg="Done." />
+    </target>
+</project>
