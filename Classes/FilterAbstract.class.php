@@ -125,8 +125,8 @@ abstract class RRSlug_FilterAbstract implements RRSlug_FilterInterface
      */
     public function getOption( $option )
     {
-        if( array_key_exists( $option, $this->_options ) ) {
-            
+        if( array_key_exists( $option, $this->_options ) )
+        {
             return $this->_options[ $option ];
         }
         

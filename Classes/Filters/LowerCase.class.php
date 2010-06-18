@@ -78,8 +78,8 @@ class RRSlug_Filters_LowerCase extends RRSlug_FilterAbstract
      */
     public function filter( $text )
     {
-        if( function_exists( 'mb_strtolower' ) ) {
-            
+        if( function_exists( 'mb_strtolower' ) )
+        {
             return ( $this->_options[ 'encoding' ] )
                    ? mb_strtolower( $text, $this->_options[ 'encoding' ] )
                    : mb_strtolower( $text );

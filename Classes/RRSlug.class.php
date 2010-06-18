@@ -74,24 +74,26 @@ class RRSlug
      */
     protected $_availableFilterChains     = array();
     
-    public function __construct( $loadDefaultFilters = true )
+    public function __construct( $loadDefaultFilters = TRUE )
     {
-        self::autoloadRegister();
+        self::registerAutoload();
         
-        if( $loadDefaultFilters ) {
-            
+        if( $loadDefaultFilters )
+        {
             $this->_loadDefaultFilters();
         }
         
         $this->_buildDefaultFilterChain();
     }
     
-    public static function autoloadRegister()
+    public static function registerAutoload()
     {
-        if( !self::$_autoloadRegistered ) {
-            
+        if( !self::$_autoloadRegistered )
+        {
             spl_autoload_register( array( __CLASS__, '_loadClass' ) );
         }
+        
+        self::$_autoloadRegistered = TRUE;
     }
     
     /**
@@ -120,22 +122,22 @@ class RRSlug
         $filePathName .= '.class.php';
         
         // Check if the file exists.
-        if( !file_exists( $filePathName ) ) {
-            
-            return false;
+        if( !file_exists( $filePathName ) )
+        {
+            return FALSE;
         }
         
         // Include it.
         require_once( $filePathName );
         
         // Check if the given class or interface is now defined.
-        if( !class_exists( $filePathName ) || !interface_exists( $filePathName ) ) {
-            
-            return false;
+        if( !class_exists( $className ) || !interface_exists( $className ) )
+        {
+            return FALSE;
         }
         
         // The class has successfully been loaded.
-        return true;
+        return TRUE;
     }
     
     /**
@@ -147,19 +149,20 @@ class RRSlug
      */
     public function filter( $text, $filterChain = self::DEFAULT_FILTERCHAIN )
     {
-        if( !( $filterChain instanceof RRSlug_FilterChain ) ) {
-            
-            if( is_string( $filterChain ) ) {
-                
-                if( !array_key_exists( $filterChain, $this->_availableFilterChains ) ) {
-                    
+        if( !( $filterChain instanceof RRSlug_FilterChain ) )
+        {
+            if( is_string( $filterChain ) )
+            {
+                if( !array_key_exists( $filterChain, $this->_availableFilterChains ) )
+                {
                     $filterChain = self::DEFAULT_FILTERCHAIN;
                 }
                 
                 $filterChain = $this->_availableFilterChains[ $filterChain ];
             
-            } else {
-                
+            }
+            else
+            {
                 $filterChain = $this->_availableFilterChains[ self::DEFAULT_FILTERCHAIN ];
             }
         }
@@ -177,8 +180,8 @@ class RRSlug
      */
     public function addFilter( RRSlug_FilterInterface $filter, array $options = array() )
     {
-        if( $options ) {
-            
+        if( $options )
+        {
             $filter->setOptions( $options );
         }
         
@@ -196,8 +199,8 @@ class RRSlug
      */
     public function removeFilter( $key )
     {
-        if( array_key_exists( $key, $this->_availableFilters ) ) {
-            
+        if( array_key_exists( $key, $this->_availableFilters ) )
+        {
             unset( $this->_availableFilters[ $key ] );
         }
         
@@ -213,14 +216,7 @@ class RRSlug
      */
     public function getFilter( $key )
     {
-        try {
-            
-            return $this->getFilterFromMixedValue( $key );
-        
-        } catch( RRSlug_Exception $e ) {
-            
-            
-        }
+        return $this->getFilterFromMixedValue( $key );
     }
     
     /**
@@ -258,8 +254,8 @@ class RRSlug
      */
     public function getChain( $key )
     {
-        if( !array_key_exists( $key, $this->_availableFilterChains ) ) {
-            
+        if( !array_key_exists( $key, $this->_availableFilterChains ) )
+        {
             throw new RRSlug_Exception_NoSuchFilterChain(
                 'No chain with key "' . $key . '" has been found.'
             );
@@ -289,8 +285,8 @@ class RRSlug
      */
     public function addChain( $key, $chain = NULL )
     {
-        if( !( $chain instanceof RRSlug_FilterChain ) ) {
-            
+        if( !( $chain instanceof RRSlug_FilterChain ) )
+        {
             $chain = new RRSlug_FilterChain( $key, $this );
         }
         
@@ -312,22 +308,22 @@ class RRSlug
         // Get all the filters in ./Filters/
         $filtersList = glob( dirname( __FILE__ ) . '/Filters/*.class.php' );
         
-        foreach( $filtersList as $filterFilePathName ) {
-            
+        foreach( $filtersList as $filterFilePathName )
+        {
             // Guess the filter's class name from its file name.
             $filterClassName = $this->_getFilterClassNameFromFileName( $filterFilePathName );
             
             require_once( $filterFilePathName );
             
-            if( !class_exists( $filterClassName ) ) {
-                
+            if( !class_exists( $filterClassName ) )
+            {
                 continue;
             }
             
             $filter = new $filterClassName();
             
-            if( !( $filter instanceof RRSlug_FilterInterface ) ) {
-                
+            if( !( $filter instanceof RRSlug_FilterInterface ) )
+            {
                 unset( $filter );
                 
                 continue;
@@ -392,8 +388,8 @@ class RRSlug
     
     public function getFilterFromMixedValue( $filter )
     {
-        if( !( $filter instanceof RRSlug_FilterInterface ) ) {
-            
+        if( !( $filter instanceof RRSlug_FilterInterface ) )
+        {
             if( is_string( $filter ) ) {
                 
                 if( !array_key_exists( $filter, $this->_availableFilters ) ) {
@@ -405,8 +401,9 @@ class RRSlug
                 
                 $filter = $this->_availableFilters[ $filter ];
             
-            } else {
-                
+            }
+            else
+            {
                 throw new RRSlug_Exception_NoSuchFilter(
                     'The first argument must be either a string or an instance' .
                     ' of RRSlug_FilterInterface.'

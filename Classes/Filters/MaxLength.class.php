@@ -81,12 +81,12 @@ class RRSlug_Filters_MaxLength extends RRSlug_FilterAbstract
      */
     public function filter( $text )
     {
-        if( $this->_options[ 'maxLength' ] > 0 && strlen( $text ) > $this->_options[ 'maxLength' ] ) {
-            
+        if( $this->_options[ 'maxLength' ] > 0 && strlen( $text ) > $this->_options[ 'maxLength' ] )
+        {
             $text = substr( $text, 0, $this->_options[ 'maxLength' ] );
             
-            if( $this->_options[ 'wholeWord' ] ) {
-                
+            if( $this->_options[ 'wholeWord' ] )
+            {
                 $text = explode( '-', $text );
                 $text = implode( '-', array_diff( $text, array( array_pop( $text ) ) ) );
             }

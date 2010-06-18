@@ -154,10 +154,10 @@ class RRSlug_FilterChain
      */
     public function setFilters( array $filters )
     {
-        foreach( $filters as $key => $filter ) {
-            
-            if( !( $filter instanceof RRSlug_FilterInterface ) ) {
-                
+        foreach( $filters as $key => $filter )
+        {
+            if( !( $filter instanceof RRSlug_FilterInterface ) )
+            {
                 unset( $filters[ $key ] );
             }
         }
@@ -187,8 +187,8 @@ class RRSlug_FilterChain
      */
     public function filter( $text )
     {
-        foreach( $this->_filters as $filter ) {
-            
+        foreach( $this->_filters as $filter )
+        {
             $text = $filter->filter( $text );
         }
         
