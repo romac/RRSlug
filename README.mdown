@@ -1,0 +1,26 @@
+RRSlug
+======
+
+Description
+-----------
+
+RRSlug is a PHP library which aims to turn any kind of text into an URL friendly string.
+
+Usage
+-----
+
+    <?php
+    
+    // Include the autoloader.
+    require_once( dirname( __FILE__ ) . '/Classes/RRSlug.class.php' );
+    
+    $slugifier = new RRSlug();
+    $text      = 'Vous êtes les    bienvenus!';
+    $slug      = $slugifier->filter( $text );
+    
+    print $slug; // Output: 'vous-etes-les-bienvenus'
+
+License
+-------
+
+The code is licensed under the very liberal [MIT license](http://opensource.org/licenses/mit-license.html).
